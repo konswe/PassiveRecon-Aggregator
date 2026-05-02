@@ -1,12 +1,11 @@
 import argparse
+import json
 import logging
 import re
 import sys
+from typing import Optional
 from pathlib import Path
-
-
-# Pre-compiled regex for validating domain names - improves performance
-DOMAIN_PATTERN = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$")
+from modules.dns_recon import get_ip
 
 
 def setup_logging() -> logging.Logger:
@@ -18,19 +17,18 @@ def setup_logging() -> logging.Logger:
     )
     return logging.getLogger(__name__)
 
-
 logger = setup_logging()
 
+
+DOMAIN_PATTERN = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$")
 
 def validate_domain(domain: str) -> str:
     """Check if the provided string is a valid domain format."""
     if not DOMAIN_PATTERN.match(domain):
-        # Raise ArgumentTypeError so argparse can automatically handle and display the error
         raise argparse.ArgumentTypeError(f"Invalid domain format: '{domain}'")
     return domain
 
 
-# Parse and validate command-line arguments provided by the user
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="PassiveRecon Aggregator - Modular OSINT tool for infrastructure mapping.",
@@ -46,7 +44,7 @@ def parse_arguments() -> argparse.Namespace:
 
     parser.add_argument(
         "-o", "--output",
-        help="Path to save the JSON output (e.g., results.json)",
+        help="Filename to save the JSON output (e.g., results.json)",
         type=Path,
         required=False
     )
@@ -60,12 +58,31 @@ def main() -> None:
 
         logger.info(f"Starting data aggregation for domain: {args.domain}")
 
+        ip_address = get_ip(args.domain)
+
+        results = {
+            "target_domain": args.domain,
+            "dns_records": {
+                "ip_address": ip_address
+            }
+        }
+
         if args.output:
-            # .resolve() converts relative paths to absolute paths
-            logger.info(f"Results will be saved to: {args.output.resolve()}")
+            # Force the output directory and ensure it exists
+            output_dir = Path("output")
+            output_dir.mkdir(exist_ok=True)
+
+            # Extract just the filename and join it with the output dir
+            final_path = output_dir / args.output.name
+
+            logger.info(f"Saving results to: {final_path.resolve()}")
+
+            with open(final_path, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=4)
+
+            logger.info("File successfully saved.")
 
     except KeyboardInterrupt:
-        # Gracefully handle Ctr+C to prevent stack traces in terminal
         logger.warning("\nExecution interrupted by user. Exiting...")
         sys.exit(130)
 
