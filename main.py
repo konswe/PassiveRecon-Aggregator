@@ -5,7 +5,10 @@ import re
 import sys
 from typing import Optional
 from pathlib import Path
+
 from modules.dns_recon import get_dns_info
+from modules.crtsh_recon import get_crtsh_subdomains
+from modules.hackertarget_recon import get_hackertarget_data
 
 
 def setup_logging() -> logging.Logger:
@@ -59,13 +62,18 @@ def main() -> None:
         logger.info(f"Starting data aggregation for domain: {args.domain}")
 
 
+        #DNS Recon Integration
         dns_data = get_dns_info(args.domain)
-
         if dns_data is None:
             logger.error("Skipping report generation due to DNS resolution failure.")
             sys.exit(1)
-
         hostname, aliases, ip_addresses = dns_data
+
+        #crt.sh integration
+        crtsh_data = get_crtsh_subdomains(args.domain)
+        
+        #hackertarget integration
+        hackertarget_data = get_hackertarget_data(args.domain)
 
         results = {
             "target_domain": args.domain,
@@ -73,7 +81,9 @@ def main() -> None:
                 "canonical_hostname": hostname,
                 "ip_addresses": ip_addresses,
                 "aliases": aliases
-            }
+            },
+            "crtsh_subdomains": crtsh_data if crtsh_data is not None else [],
+            "hackertarget_hosts": hackertarget_data if hackertarget_data is not None else []
         }
 
         if args.output:
