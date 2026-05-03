@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import sys
+import time
 from typing import Optional
 from pathlib import Path
 
@@ -56,6 +57,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
+    start_time = time.time()
     try:
         args = parse_arguments()
 
@@ -100,6 +102,10 @@ def main() -> None:
                 json.dump(results, f, indent=4)
 
             logger.info("File successfully saved.")
+        
+        elapsed_time = time.time() - start_time
+        logger.info(f"Execution finished in {elapsed_time:.2f} seconds.")
+    
 
     except KeyboardInterrupt:
         logger.warning("\nExecution interrupted by user. Exiting...")
