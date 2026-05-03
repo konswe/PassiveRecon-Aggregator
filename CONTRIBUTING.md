@@ -14,6 +14,12 @@ If you find a bug, please create an issue on GitHub using the "Bug Report" templ
 ### Suggesting Enhancements
 If you have an idea for a new feature or a way to improve an existing one, create an issue using the "Feature Request" template. Explain why this feature would be useful to users.
 
+### Working on Existing Issues
+If you want to work on an issue that has already been created (especially those labeled `good first issue` or `help wanted`):
+1. **Leave a comment** on the issue stating that you would like to work on it.
+2. **Wait for the maintainer** to assign the issue to you. This prevents multiple people from accidentally working on the same thing.
+3. Once assigned, you can proceed with the "Submitting Pull Requests" steps below.
+
 ### Submitting Pull Requests
 1. **Fork the repository** and clone it to your local machine.
 2. **Create a new branch** for your feature or bugfix:
