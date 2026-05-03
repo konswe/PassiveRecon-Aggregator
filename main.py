@@ -5,7 +5,7 @@ import re
 import sys
 from typing import Optional
 from pathlib import Path
-from modules.dns_recon import get_ip
+from modules.dns_recon import get_dns_info
 
 
 def setup_logging() -> logging.Logger:
@@ -58,12 +58,21 @@ def main() -> None:
 
         logger.info(f"Starting data aggregation for domain: {args.domain}")
 
-        ip_address = get_ip(args.domain)
+
+        dns_data = get_dns_info(args.domain)
+
+        if dns_data is None:
+            logger.error("Skipping report generation due to DNS resolution failure.")
+            sys.exit(1)
+
+        hostname, aliases, ip_addresses = dns_data
 
         results = {
             "target_domain": args.domain,
             "dns_records": {
-                "ip_address": ip_address
+                "canonical_hostname": hostname,
+                "ip_addresses": ip_addresses,
+                "aliases": aliases
             }
         }
 
