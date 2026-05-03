@@ -4,7 +4,6 @@ import logging
 import re
 import sys
 import time
-from typing import Optional
 from pathlib import Path
 
 from modules.dns_recon import get_dns_info

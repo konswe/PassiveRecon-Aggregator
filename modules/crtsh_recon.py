@@ -24,7 +24,7 @@ def get_crtsh_subdomains(domain: str) -> Optional[List[str]]:
             else:
                 logger.error(f"crt.sh returned status code {response.status_code}.")
                 return None
-        except requests.RequestException as e:
+        except requests.RequestException:
             logger.warning(f"crt.sh connection timeout/error. Retrying ({attempt+1}/3)...")
             time.sleep(2)
     else:
