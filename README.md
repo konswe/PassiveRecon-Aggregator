@@ -71,4 +71,4 @@ Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of co
 Please also review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) to ensure a welcoming environment for all.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
