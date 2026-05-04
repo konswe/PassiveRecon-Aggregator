@@ -54,19 +54,19 @@ def parse_arguments() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def save_results(results: dict, output_path: Path):
+def save_results(results: dict, output_path: Path) -> None:
     try:
         output_dir = Path("output")
         output_dir.mkdir(exist_ok=True)
         final_path = output_dir/output_path.name
         
         logger.info(f"Save Results to: {final_path.resolve()}")
-        with open(final_path, "w", encodings="utf8") as f:
-            json.dump(results,f,ident=4)
+        with open(final_path, "w", encoding="utf8") as f:
+            json.dump(results,f,indent=4)
         logger.info("File Saved")    
     except OSError as e:
         logger.error(f"Failed to save results to {output_path.name}: {e}" )
-
+        sys.exit(1)
 
 def main() -> None:
     start_time = time.time()
