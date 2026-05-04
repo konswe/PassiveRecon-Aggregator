@@ -102,6 +102,14 @@ def main() -> None:
                 json.dump(results, f, indent=4)
 
             logger.info("File successfully saved.")
+        else:
+            results_str = json.dumps(results)
+            ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+            found_ips = set(re.findall(ip_pattern, results_str))
+            if found_ips:
+                print(f"Discovered IPs: {', '.join(sorted(found_ips))}")
+            else:
+                print("No IPs found.")
         
         elapsed_time = time.time() - start_time
         logger.info(f"Execution finished in {elapsed_time:.2f} seconds.")
