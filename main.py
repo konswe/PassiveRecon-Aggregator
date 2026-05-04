@@ -5,7 +5,6 @@ import re
 import sys
 import time
 from pathlib import Path
-
 from modules.dns_recon import get_dns_info
 from modules.crtsh_recon import get_crtsh_subdomains
 from modules.hackertarget_recon import get_hackertarget_data
@@ -20,10 +19,11 @@ def setup_logging() -> logging.Logger:
     )
     return logging.getLogger(__name__)
 
+
 logger = setup_logging()
 
-
 DOMAIN_PATTERN = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$")
+
 
 def validate_domain(domain: str) -> str:
     """Check if the provided string is a valid domain format."""
@@ -37,56 +37,52 @@ def parse_arguments() -> argparse.Namespace:
         description="PassiveRecon Aggregator - Modular OSINT tool for infrastructure mapping.",
         formatter_class=argparse.RawTextHelpFormatter
     )
-
     parser.add_argument(
         "-d", "--domain",
         help="Target domain to scan (e.g., example.com)",
         type=validate_domain,
         required=True
     )
-
     parser.add_argument(
         "-o", "--output",
         help="Filename to save the JSON output (e.g., results.json)",
         type=Path,
         required=False
     )
-
     return parser.parse_args()
+
 
 def save_results(results: dict, output_path: Path) -> None:
     try:
         output_dir = Path("output")
         output_dir.mkdir(exist_ok=True)
-        final_path = output_dir/output_path.name
-        
-        logger.info(f"Save Results to: {final_path.resolve()}")
-        with open(final_path, "w", encoding="utf8") as f:
-            json.dump(results,f,indent=4)
-        logger.info("File Saved")    
+        final_path = output_dir / output_path.name
+        logger.info(f"Saving results to: {final_path.resolve()}")
+        with open(final_path, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=4)
+        logger.info("File successfully saved.")
     except OSError as e:
-        logger.error(f"Failed to save results to {output_path.name}: {e}" )
+        logger.error(f"Failed to save results to {output_path.name}: {e}")
         sys.exit(1)
+
 
 def main() -> None:
     start_time = time.time()
     try:
         args = parse_arguments()
-
         logger.info(f"Starting data aggregation for domain: {args.domain}")
 
-
-        #DNS Recon Integration
+        # DNS Recon Integration
         dns_data = get_dns_info(args.domain)
         if dns_data is None:
             logger.error("Skipping report generation due to DNS resolution failure.")
             sys.exit(1)
         hostname, aliases, ip_addresses = dns_data
 
-        #crt.sh integration
+        # crt.sh integration
         crtsh_data = get_crtsh_subdomains(args.domain)
-        
-        #hackertarget integration
+
+        # hackertarget integration
         hackertarget_data = get_hackertarget_data(args.domain)
 
         results = {
@@ -101,7 +97,16 @@ def main() -> None:
         }
 
         if args.output:
-            save_results(results,args.output)
+            save_results(results, args.output)
+        else:
+            results_str = json.dumps(results)
+            ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+            found_ips = set(re.findall(ip_pattern, results_str))
+            if found_ips:
+                print(f"Discovered IPs: {', '.join(sorted(found_ips))}")
+            else:
+                print("No IPs found.")
+
     except KeyboardInterrupt:
         logger.warning("\nExecution interrupted by user. Exiting...")
         sys.exit(130)
