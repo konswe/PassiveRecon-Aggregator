@@ -4,6 +4,7 @@ import logging
 import re
 import sys
 import time
+import concurrent.futures
 from pathlib import Path
 from modules.dns_recon import get_dns_info
 from modules.crtsh_recon import get_crtsh_subdomains
@@ -72,18 +73,21 @@ def main() -> None:
         args = parse_arguments()
         logger.info(f"Starting data aggregation for domain: {args.domain}")
 
-        # DNS Recon Integration
-        dns_data = get_dns_info(args.domain)
+        logger.info("Launching concurrent data collection...")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_dns = executor.submit(get_dns_info, args.domain)
+            future_crtsh = executor.submit(get_crtsh_subdomains, args.domain)
+            future_ht = executor.submit(get_hackertarget_data, args.domain)
+
+            dns_data = future_dns.result()
+            crtsh_data = future_crtsh.result()
+            hackertarget_data = future_ht.result()
+
         if dns_data is None:
             logger.error("Skipping report generation due to DNS resolution failure.")
             sys.exit(1)
+            
         hostname, aliases, ip_addresses = dns_data
-
-        # crt.sh integration
-        crtsh_data = get_crtsh_subdomains(args.domain)
-
-        # hackertarget integration
-        hackertarget_data = get_hackertarget_data(args.domain)
 
         results = {
             "target_domain": args.domain,
