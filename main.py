@@ -6,18 +6,60 @@ import sys
 import time
 import concurrent.futures
 from pathlib import Path
+from colorama import init, Fore, Style
 from modules.dns_recon import get_dns_info
 from modules.crtsh_recon import get_crtsh_subdomains
 from modules.hackertarget_recon import get_hackertarget_data
 
 
+BANNER = r"""
+███████╗███████╗██████╗ ██╗   ██╗███████╗ ██████╗ ██████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+██╔════╝██╔════╝██╔══██╗██║   ██║██╔════╝██╔═══██╗██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+███████╗█████╗  ██████╔╝██║   ██║███████╗██║   ██║██████╔╝   ██║   ██║██║   ██║██╔██╗ ██║
+╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝╚════██║██║   ██║██╔═══╝    ██║   ██║██║   ██║██║╚██╗██║
+███████║███████╗██║  ██║ ╚████╔╝ ███████║╚██████╔╝██║        ██║   ██║╚██████╔╝██║ ╚████║
+╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝ ╚═════╝ ╚═╝        ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                            ── Aggregator ──
+            Modular OSINT Tool for Infrastructure Mapping
+"""
+
+
+def print_banner() -> None:
+    """Print the ASCII art banner to stdout."""
+    init(autoreset=True)
+    print(Fore.CYAN + BANNER)
+    print(Style.RESET_ALL)
+
+
+class ColorizedFormatter(logging.Formatter):
+    """Custom formatter that colorizes log levels using colorama."""
+
+    _LEVEL_COLORS = {
+        logging.DEBUG: Fore.CYAN,
+        logging.INFO: Fore.GREEN,
+        logging.WARNING: Fore.YELLOW,
+        logging.ERROR: Fore.RED + Style.BRIGHT,
+        logging.CRITICAL: Fore.RED + Style.BRIGHT + Style.BRIGHT,
+    }
+
+    def format(self, record: logging.LogRecord) -> str:
+        color = self._LEVEL_COLORS.get(record.levelno, "")
+        if color:
+            record.levelname = f"{color}{record.levelname}{Style.RESET_ALL}"
+        return super().format(record)
+
+
 def setup_logging() -> logging.Logger:
-    """Initialize and configure the logger."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s] %(levelname)s: %(message)s",
-        datefmt="%H:%M:%S"
+    """Initialize and configure the logger with colorized output."""
+    init(autoreset=True)
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        ColorizedFormatter(
+            fmt="[%(asctime)s] %(levelname)s: %(message)s",
+            datefmt="%H:%M:%S",
+        )
     )
+    logging.basicConfig(level=logging.INFO, handlers=[handler])
     return logging.getLogger(__name__)
 
 
@@ -68,6 +110,7 @@ def save_results(results: dict, output_path: Path) -> None:
 
 
 def main() -> None:
+    print_banner()
     start_time = time.time()
     try:
         args = parse_arguments()
