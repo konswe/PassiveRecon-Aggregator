@@ -10,6 +10,7 @@ from colorama import init, Fore, Style
 from modules.dns_recon import get_dns_info
 from modules.crtsh_recon import get_crtsh_subdomains
 from modules.hackertarget_recon import get_hackertarget_data
+from modules.whois_recon import get_whois_info
 
 
 BANNER = r"""
@@ -115,14 +116,16 @@ def main() -> None:
         logger.info(f"Starting data aggregation for domain: {args.domain}")
 
         logger.info("Launching concurrent data collection...")
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             future_dns = executor.submit(get_dns_info, args.domain)
             future_crtsh = executor.submit(get_crtsh_subdomains, args.domain)
             future_ht = executor.submit(get_hackertarget_data, args.domain)
+            future_whois = executor.submit(get_whois_info, args.domain)
 
             dns_data = future_dns.result()
             crtsh_data = future_crtsh.result()
             hackertarget_data = future_ht.result()
+            whois_data = future_whois.result()
 
         if dns_data is None:
             logger.error("Skipping report generation due to DNS resolution failure.")
@@ -138,7 +141,8 @@ def main() -> None:
                 "aliases": aliases
             },
             "crtsh_subdomains": crtsh_data if crtsh_data is not None else [],
-            "hackertarget_hosts": hackertarget_data if hackertarget_data is not None else []
+            "hackertarget_hosts": hackertarget_data if hackertarget_data is not None else [],
+            "whois_info": whois_data if whois_data is not None else {}
         }
 
         if args.output:
