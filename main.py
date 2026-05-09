@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import logging
 import re
@@ -11,6 +12,7 @@ from modules.dns_recon import get_dns_info
 from modules.crtsh_recon import get_crtsh_subdomains
 from modules.hackertarget_recon import get_hackertarget_data
 from modules.whois_recon import get_whois_info
+from modules.dns_resolution import resolve_subdomains
 
 
 BANNER = r"""
@@ -18,7 +20,7 @@ BANNER = r"""
  |_) |_) __ /\   _   _  ._ _   _   _. _|_  _  ._ 
  |   | \   /--\ (_| (_| | (/_ (_| (_|  |_ (_) |  
                  _|  _|        _|                
-               ── Aggregator ──
+               -- Aggregator --
  Modular OSINT Tool for Infrastructure Mapping
 """
 
@@ -98,6 +100,7 @@ def save_results(results: dict, output_path: Path) -> None:
     try:
         output_dir = Path("output")
         output_dir.mkdir(exist_ok=True)
+        # Bierzemy samą nazwę pliku podaną przez usera i ładujemy do folderu output
         final_path = output_dir / output_path.name
         logger.info(f"Saving results to: {final_path.resolve()}")
         with open(final_path, "w", encoding="utf-8") as f:
@@ -132,6 +135,11 @@ def main() -> None:
             sys.exit(1)
             
         hostname, aliases, ip_addresses = dns_data
+        
+        # Post-processing: Active DNS Resolution for crt.sh subdomains
+        resolved_crtsh_data = {"active": [], "dead": []}
+        if crtsh_data:
+            resolved_crtsh_data = asyncio.run(resolve_subdomains(crtsh_data))
 
         results = {
             "target_domain": args.domain,
@@ -140,7 +148,7 @@ def main() -> None:
                 "ip_addresses": ip_addresses,
                 "aliases": aliases
             },
-            "crtsh_subdomains": crtsh_data if crtsh_data is not None else [],
+            "crtsh_subdomains": resolved_crtsh_data,
             "hackertarget_hosts": hackertarget_data if hackertarget_data is not None else [],
             "whois_info": whois_data if whois_data is not None else {}
         }

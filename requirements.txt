@@ -2,3 +2,4 @@ requests
 shodan
 colorama
 python-whois
+dnspython
